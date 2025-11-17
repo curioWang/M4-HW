@@ -1,3 +1,5 @@
+644a30c Task 1.2 update log.txt
+ff9b32d Task 2.1: Update log.txt
 1a44885 Task 2.1: Update log.txt after refactoring
 7b2b856 Task 1.2 update log.txt
 ee227f7 Initial commit
