@@ -10,7 +10,7 @@ public class PerformanceData {
     private final String name;
     private final int audience;
 
-    // 4.1: 引入计算器实例
+    // 4.1: 存储计算器实例
     private final AbstractPerformanceCalculator calculator;
 
     /**
@@ -23,17 +23,17 @@ public class PerformanceData {
     public PerformanceData(final Performance performance,
                            final Play play,
                            final AbstractPerformanceCalculator calculator) {
-        // 3.1: 字段现在直接从传入的 Performance 和 Play 实例中获取
+        // 3.1: 字段现在直接从传入的 Play 实例中获取
         this.name = play.getName();
         this.audience = performance.getAudience();
 
         // 4.1: 存储计算器实例
         this.calculator = calculator;
 
-        // 3.1: 删除了 amount 和 volumeCredits 字段及其计算逻辑
+        // 4.2: 删除了 amount 和 volumeCredits 字段及其计算逻辑
     }
 
-    /* ===================== Getters ===================== */
+    /* ===================== Getters (委托给计算器) ===================== */
 
     public String getName() {
         return name;
@@ -44,7 +44,7 @@ public class PerformanceData {
     }
 
     /**
-     * 4.1: 将计算职责委托给 calculator 实例.
+     * 将计算职责委托给 calculator 实例.
      * @return the calculated amount.
      */
     public int getAmount() {
@@ -52,7 +52,7 @@ public class PerformanceData {
     }
 
     /**
-     * 4.1: 将计算职责委托给 calculator 实例.
+     * 将计算职责委托给 calculator 实例.
      * @return the earned credits.
      */
     public int getVolumeCredits() {
