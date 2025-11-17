@@ -29,7 +29,8 @@ public class StatementPrinter {
     public String statement() {
         final StringBuilder result =
                 new StringBuilder("Statement for " + invoice.getCustomer() + System.lineSeparator());
-        final NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.US);
+        // 2.3: 移除了 NumberFormat currency 局部变量
+
         int totalAmount = 0;
         int volumeCredits = 0;
 
@@ -45,16 +46,32 @@ public class StatementPrinter {
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
                     getPlay(performance).getName(),
-                    currency.format(thisAmount / (double) Constants.PERCENT_FACTOR),
+                    // 2.3: 调用新的 usd() 辅助方法
+                    usd(thisAmount),
                     performance.getAudience()));
             totalAmount += thisAmount;
         }
 
         // 汇总
         result.append(String.format("Amount owed is %s%n",
-                currency.format(totalAmount / (double) Constants.PERCENT_FACTOR)));
+                // 2.3: 调用新的 usd() 辅助方法
+                usd(totalAmount)));
         result.append(String.format("You earned %s credits%n", volumeCredits));
         return result.toString();
+    }
+
+    /* ===================== Task 2.3 Helpers ===================== */
+
+    /**
+     * Formats an integer amount (in cents) into a US dollar currency string.
+     * 2.3: 提取此方法以封装货币格式化逻辑
+     * @param amount The amount in cents.
+     * @return The formatted currency string.
+     */
+    private String usd(final int amount) {
+        // 2.3: 在方法内部创建 NumberFormat 实例
+        final NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.US);
+        return currency.format(amount / (double) Constants.PERCENT_FACTOR);
     }
 
     /* ===================== Task 2.1 Helpers ===================== */
@@ -70,13 +87,11 @@ public class StatementPrinter {
 
     /**
      * Calculates the total amount for a given performance.
-     * 2.1: 移除了 Play play 参数，局部变量重命名为 result
      * @param performance the performance
      * @return the calculated amount
      * @throws RuntimeException if the play type is unknown
      */
     private int getAmount(final Performance performance) {
-        // 2.1: 在方法内部使用 getPlay(performance) 获取 Play 对象
         final Play play = getPlay(performance);
         int result;
 
@@ -114,20 +129,13 @@ public class StatementPrinter {
      * @throws RuntimeException if the play type is unknown
      */
     private int getVolumeCredits(final Performance performance) {
-        // 2.2: 变量重命名为 result，方法只返回贡献的积分
         int result = 0;
 
-        // 积分基础计算
         result += Math.max(performance.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
 
-        // 额外积分计算
         if (TYPE_COMEDY.equals(getPlay(performance).getType())) {
             result += performance.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
         }
-
-        // 注意：此处需要添加 default case 来满足 CheckStyle 的 Javadoc @throws 要求
-        // 除非指导中明确要求在 getVolumeCredits 中不抛异常，否则为避免潜在问题，
-        // 我们通常假设 getPlay 已经确保了 play 存在。
 
         return result;
     }
