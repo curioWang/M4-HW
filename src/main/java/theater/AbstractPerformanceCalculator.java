@@ -1,20 +1,17 @@
 package theater;
 
 /**
- * Base class for calculating performance details (amount and credits).
- * In Task 4.2, it holds all calculation logic before polymorphism is introduced.
+ * Abstract base class for calculating performance details (amount and credits).
+ * Serves as a base for polymorphic behavior in Task 4.
  */
-// 4.2: 移除 abstract 关键字，使其可以被实例化
-public class AbstractPerformanceCalculator {
+// 4.3: 改回 abstract
+public abstract class AbstractPerformanceCalculator {
 
-    // 4.2/Checkstyle Fix: 将 static 变量移到实例变量之前
     private static final String TYPE_COMEDY = "comedy";
     private static final String TYPE_TRAGEDY = "tragedy";
 
     private final Performance performance;
     private final Play play;
-
-    // ... (构造函数 and methods) ...
 
     /**
      * Constructs an AbstractPerformanceCalculator.
@@ -27,70 +24,45 @@ public class AbstractPerformanceCalculator {
     }
 
     /**
-     * Factory Method - Responsible for returning the correct calculator instance.
-     * In Task 4.2, it simply returns the base class instance.
+     * Factory Method - Responsible for returning the correct calculator instance based on play type.
      * @param performance the performance data
      * @param play the associated play information
-     * @return a base AbstractPerformanceCalculator instance
+     * @return a concrete subclass of AbstractPerformanceCalculator
+     * @throws RuntimeException if the play type is unknown
      */
     public static AbstractPerformanceCalculator createPerformanceCalculator(
             final Performance performance, final Play play) {
 
-        // 4.2: 返回基类实例
-        return new AbstractPerformanceCalculator(performance, play);
-    }
-
-    /**
-     * Calculates the total amount for the performance (Logic moved from PerformanceData).
-     * @return the calculated amount in cents.
-     * @throws RuntimeException if the play type is unknown
-     */
-    public int getAmount() {
-        final Play currentPlay = getPlay();
-        int result;
-
-        switch (currentPlay.getType()) {
+        // 4.3: 降级为 Java 8 兼容的传统 switch 语句
+        switch (play.getType()) {
             case TYPE_TRAGEDY:
-                result = Constants.TRAGEDY_BASE_AMOUNT;
-                if (getPerformance().getAudience() > Constants.TRAGEDY_AUDIENCE_THRESHOLD) {
-                    result += Constants.TRAGEDY_OVER_BASE_CAPACITY_PER_PERSON
-                            * (getPerformance().getAudience() - Constants.TRAGEDY_AUDIENCE_THRESHOLD);
-                }
-                break;
-
+                return new TragedyCalculator(performance, play);
             case TYPE_COMEDY:
-                result = Constants.COMEDY_BASE_AMOUNT;
-                if (getPerformance().getAudience() > Constants.COMEDY_AUDIENCE_THRESHOLD) {
-                    result += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
-                            + Constants.COMEDY_OVER_BASE_CAPACITY_PER_PERSON
-                            * (getPerformance().getAudience() - Constants.COMEDY_AUDIENCE_THRESHOLD);
-                }
-                result += Constants.COMEDY_AMOUNT_PER_AUDIENCE * getPerformance().getAudience();
-                break;
-
+                return new ComedyCalculator(performance, play);
             default:
-                throw new RuntimeException(String.format("unknown type: %s", currentPlay.getType()));
+                throw new RuntimeException(String.format("unknown type: %s", play.getType()));
         }
-        return result;
     }
 
+    // --- 抽象和通用计算方法 ---
+
     /**
-     * Calculates the volume credits earned for the performance (Logic moved from PerformanceData).
+     * Calculates the total amount for the performance.
+     * This method must be implemented by concrete calculator subclasses.
+     * @return the calculated amount in cents.
+     */
+    public abstract int getAmount();
+
+    /**
+     * Calculates the volume credits earned for the performance. (通用实现)
      * @return the earned credits.
      */
     public int getVolumeCredits() {
-        int result = 0;
-
-        result += Math.max(getPerformance().getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
-
-        if (TYPE_COMEDY.equals(getPlay().getType())) {
-            result += getPerformance().getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
-        }
-
-        return result;
+        // 4.3: 保留基础积分计算逻辑
+        return Math.max(getPerformance().getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
     }
 
-    // --- Getter Methods (用于封装私有字段) ---
+    // --- Getter Methods ---
 
     /**
      * Returns the raw performance data.
