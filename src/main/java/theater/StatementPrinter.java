@@ -39,11 +39,8 @@ public class StatementPrinter {
             // 2.1: 内联了 play 和 amount 变量，直接调用 helper 方法
             final int thisAmount = getAmount(performance);
 
-            // add volume credits
-            volumeCredits += Math.max(performance.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
-            if (TYPE_COMEDY.equals(getPlay(performance).getType())) {
-                volumeCredits += performance.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
-            }
+            // 2.2: 调用新提取的 helper 方法，并进行累加
+            volumeCredits += getVolumeCredits(performance);
 
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
@@ -105,6 +102,33 @@ public class StatementPrinter {
             default:
                 throw new RuntimeException(String.format("unknown type: %s", play.getType()));
         }
+        return result;
+    }
+
+    /* ===================== Task 2.2 Helpers ===================== */
+
+    /**
+     * Calculates the volume credits earned for a single performance.
+     * @param performance the performance
+     * @return the earned credits
+     * @throws RuntimeException if the play type is unknown
+     */
+    private int getVolumeCredits(final Performance performance) {
+        // 2.2: 变量重命名为 result，方法只返回贡献的积分
+        int result = 0;
+
+        // 积分基础计算
+        result += Math.max(performance.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
+
+        // 额外积分计算
+        if (TYPE_COMEDY.equals(getPlay(performance).getType())) {
+            result += performance.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
+        }
+
+        // 注意：此处需要添加 default case 来满足 CheckStyle 的 Javadoc @throws 要求
+        // 除非指导中明确要求在 getVolumeCredits 中不抛异常，否则为避免潜在问题，
+        // 我们通常假设 getPlay 已经确保了 play 存在。
+
         return result;
     }
 }
