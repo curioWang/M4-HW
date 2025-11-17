@@ -30,8 +30,13 @@ public class PastoralCalculator extends AbstractPerformanceCalculator {
 
     @Override
     public int getVolumeCredits() {
-        return Math.max(
+        // 按作业给的公式：
+        // Math.max(audience - 20, 0) + audience / 2
+        int baseCredits = Math.max(
                 getPerformance().getAudience() - Constants.PASTORAL_VOLUME_CREDIT_THRESHOLD,
                 0);
+        int bonus = getPerformance().getAudience() / 2;
+        return baseCredits + bonus;
     }
 }
+
