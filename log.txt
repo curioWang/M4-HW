@@ -1,1 +1,2 @@
+7b2b856 Task 1.2 update log.txt
 ee227f7 Initial commit
