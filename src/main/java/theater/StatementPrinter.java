@@ -8,16 +8,14 @@ import java.util.Map;
  * Generates a plain-text statement for an invoice.
  */
 public class StatementPrinter {
-    // --- play type literals extracted to constants (MultipleStringLiterals) ---
-    private static final String TYPE_TRAGEDY = "tragedy";
-    private static final String TYPE_COMEDY = "comedy";
 
-    private final Invoice invoice;
-    private final Map<String, Play> plays;
+    // 3.1: 移除了 invoice 和 plays 字段
+    // 3.1: 引入 StatementData 字段，以便子类 HTMLStatementPrinter 访问
+    private final StatementData statementData;
 
     public StatementPrinter(final Invoice invoice, final Map<String, Play> plays) {
-        this.invoice = invoice;
-        this.plays = plays;
+        // 3.1: 构造函数现在只初始化 StatementData
+        this.statementData = new StatementData(invoice, plays);
     }
 
     /**
@@ -27,138 +25,44 @@ public class StatementPrinter {
      * @throws RuntimeException if one of the play types is not known
      */
     public String statement() {
+        // 3.1: 整个方法体被提取到 renderPlainText
+        return renderPlainText(this.statementData);
+    }
+
+    // 3.1: 提取的渲染方法，只负责字符串拼接
+    private String renderPlainText(final StatementData data) {
         final StringBuilder result =
-                new StringBuilder("Statement for " + invoice.getCustomer() + System.lineSeparator());
-        // 2.4: 移除了 totalAmount 和 volumeCredits 局部变量
+                new StringBuilder("Statement for " + data.getCustomer() + System.lineSeparator());
 
-        // 细项循环：只负责计算单场金额和拼装字符串
-        for (final Performance performance : invoice.getPerformances()) {
-
-            // 2.1: 获取单场金额
-            final int thisAmount = getAmount(performance);
-
-            // 2.4: 移除了 volumeCredits 和 totalAmount 的累加操作
-
+        // 细项循环：遍历 PerformanceData
+        for (final PerformanceData perfData : data.getPerformances()) {
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
-                    getPlay(performance).getName(),
-                    usd(thisAmount),
-                    performance.getAudience()));
+                    perfData.getName(),
+                    // 2.3/3.1: 调用 usd() 格式化金额
+                    usd(perfData.getAmount()),
+                    perfData.getAudience()));
         }
 
-        // 汇总：直接调用查询方法 (Replace Temp with Query)
+        // 汇总：调用 StatementData 中的查询方法 (totalAmount, volumeCredits)
         result.append(String.format("Amount owed is %s%n",
-                // 2.4: 调用查询方法
-                usd(getTotalAmount())));
+                usd(data.totalAmount())));
         result.append(String.format("You earned %s credits%n",
-                // 2.4: 调用查询方法
-                getTotalVolumeCredits()));
+                data.volumeCredits()));
         return result.toString();
     }
 
-    /* ===================== Task 2.4 Helpers ===================== */
-
-    /**
-     * Calculates the total amount owed for all performances in the invoice.
-     * @return the total amount
-     */
-    private int getTotalAmount() {
-        int result = 0;
-        // 2.4: 实现独立的累加循环
-        for (final Performance performance : invoice.getPerformances()) {
-            result += getAmount(performance);
-        }
-        return result;
-    }
-
-    /**
-     * Calculates the total volume credits earned for all performances in the invoice.
-     * @return the total volume credits
-     */
-    private int getTotalVolumeCredits() {
-        int result = 0;
-        // 2.4: 实现独立的累加循环
-        for (final Performance performance : invoice.getPerformances()) {
-            result += getVolumeCredits(performance);
-        }
-        return result;
-    }
-
-    /* ===================== Task 2.3 Helpers ===================== */
+    /* ===================== Task 2.3 Helper ===================== */
 
     /**
      * Formats an integer amount (in cents) into a US dollar currency string.
      * @param amount The amount in cents.
      * @return The formatted currency string.
      */
-    private String usd(final int amount) {
+    protected String usd(final int amount) {
         final NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.US);
         return currency.format(amount / (double) Constants.PERCENT_FACTOR);
     }
 
-    /* ===================== Task 2.1 Helpers ===================== */
-
-    /**
-     * Extracts the Play object associated with a Performance.
-     * @param performance the performance
-     * @return the associated play
-     */
-    private Play getPlay(final Performance performance) {
-        return plays.get(performance.getPlayID());
-    }
-
-    /**
-     * Calculates the total amount for a given performance.
-     * @param performance the performance
-     * @return the calculated amount
-     * @throws RuntimeException if the play type is unknown
-     */
-    private int getAmount(final Performance performance) {
-        final Play play = getPlay(performance);
-        int result;
-
-        switch (play.getType()) {
-            case TYPE_TRAGEDY:
-                result = Constants.TRAGEDY_BASE_AMOUNT;
-                if (performance.getAudience() > Constants.TRAGEDY_AUDIENCE_THRESHOLD) {
-                    result += Constants.TRAGEDY_OVER_BASE_CAPACITY_PER_PERSON
-                            * (performance.getAudience() - Constants.TRAGEDY_AUDIENCE_THRESHOLD);
-                }
-                break;
-
-            case TYPE_COMEDY:
-                result = Constants.COMEDY_BASE_AMOUNT;
-                if (performance.getAudience() > Constants.COMEDY_AUDIENCE_THRESHOLD) {
-                    result += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
-                            + Constants.COMEDY_OVER_BASE_CAPACITY_PER_PERSON
-                            * (performance.getAudience() - Constants.COMEDY_AUDIENCE_THRESHOLD);
-                }
-                result += Constants.COMEDY_AMOUNT_PER_AUDIENCE * performance.getAudience();
-                break;
-
-            default:
-                throw new RuntimeException(String.format("unknown type: %s", play.getType()));
-        }
-        return result;
-    }
-
-    /* ===================== Task 2.2 Helpers ===================== */
-
-    /**
-     * Calculates the volume credits earned for a single performance.
-     * @param performance the performance
-     * @return the earned credits
-     * @throws RuntimeException if the play type is unknown
-     */
-    private int getVolumeCredits(final Performance performance) {
-        int result = 0;
-
-        result += Math.max(performance.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
-
-        if (TYPE_COMEDY.equals(getPlay(performance).getType())) {
-            result += performance.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
-        }
-
-        return result;
-    }
+    // 3.1: 所有计算 helper (getPlay, getAmount, getVolumeCredits, getTotal...) 已被移除
 }
