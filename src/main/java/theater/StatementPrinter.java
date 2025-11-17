@@ -29,47 +29,69 @@ public class StatementPrinter {
     public String statement() {
         final StringBuilder result =
                 new StringBuilder("Statement for " + invoice.getCustomer() + System.lineSeparator());
-        // 2.3: 移除了 NumberFormat currency 局部变量
+        // 2.4: 移除了 totalAmount 和 volumeCredits 局部变量
 
-        int totalAmount = 0;
-        int volumeCredits = 0;
-
-        // 细项循环：计算金额、积分并拼装字符串
+        // 细项循环：只负责计算单场金额和拼装字符串
         for (final Performance performance : invoice.getPerformances()) {
 
-            // 2.1: 内联了 play 和 amount 变量，直接调用 helper 方法
+            // 2.1: 获取单场金额
             final int thisAmount = getAmount(performance);
 
-            // 2.2: 调用新提取的 helper 方法，并进行累加
-            volumeCredits += getVolumeCredits(performance);
+            // 2.4: 移除了 volumeCredits 和 totalAmount 的累加操作
 
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n",
                     getPlay(performance).getName(),
-                    // 2.3: 调用新的 usd() 辅助方法
                     usd(thisAmount),
                     performance.getAudience()));
-            totalAmount += thisAmount;
         }
 
-        // 汇总
+        // 汇总：直接调用查询方法 (Replace Temp with Query)
         result.append(String.format("Amount owed is %s%n",
-                // 2.3: 调用新的 usd() 辅助方法
-                usd(totalAmount)));
-        result.append(String.format("You earned %s credits%n", volumeCredits));
+                // 2.4: 调用查询方法
+                usd(getTotalAmount())));
+        result.append(String.format("You earned %s credits%n",
+                // 2.4: 调用查询方法
+                getTotalVolumeCredits()));
         return result.toString();
+    }
+
+    /* ===================== Task 2.4 Helpers ===================== */
+
+    /**
+     * Calculates the total amount owed for all performances in the invoice.
+     * @return the total amount
+     */
+    private int getTotalAmount() {
+        int result = 0;
+        // 2.4: 实现独立的累加循环
+        for (final Performance performance : invoice.getPerformances()) {
+            result += getAmount(performance);
+        }
+        return result;
+    }
+
+    /**
+     * Calculates the total volume credits earned for all performances in the invoice.
+     * @return the total volume credits
+     */
+    private int getTotalVolumeCredits() {
+        int result = 0;
+        // 2.4: 实现独立的累加循环
+        for (final Performance performance : invoice.getPerformances()) {
+            result += getVolumeCredits(performance);
+        }
+        return result;
     }
 
     /* ===================== Task 2.3 Helpers ===================== */
 
     /**
      * Formats an integer amount (in cents) into a US dollar currency string.
-     * 2.3: 提取此方法以封装货币格式化逻辑
      * @param amount The amount in cents.
      * @return The formatted currency string.
      */
     private String usd(final int amount) {
-        // 2.3: 在方法内部创建 NumberFormat 实例
         final NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.US);
         return currency.format(amount / (double) Constants.PERCENT_FACTOR);
     }
