@@ -1,3 +1,4 @@
+94466a4 "Task 3.2: implement HTMLStatementPrinter and adjust StatementPrinter"
 6f56542 Task 3.1: split phase with StatementData/PerformanceData
 45106b5 Task 2.4: Removing Total Volume Credits and Total Amount
 f863fd3 Task 2.3: Extract Currency Formatting and Inline Local Variable (usd)
