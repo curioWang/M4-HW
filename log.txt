@@ -1,3 +1,6 @@
+f441899 Task 1.1 - fix CheckStyle issues
+249bbe8 fix: save github.com.markusurl as plain text
+c5f6497 task 6
 9138bd3 task 5 last version mistake modified
 ce15890 task 5
 b850457 task 4.3
